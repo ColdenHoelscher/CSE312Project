@@ -16,15 +16,18 @@ def hello_world():  # put application's code here
         formPassword = flask.request.form['psw']
         # print(formUsername)
         # print(formPassword)
+        formUsername = formUsername.replace('&', '&#38;')
+        formUsername = formUsername.replace('<', '&#60;')
+        formUsername = formUsername.replace('>', '&#62;')
         desiredEntry = list(username_table.find({"username": formUsername}))
         if len(desiredEntry) == 0:
             userInfo = {"username": formUsername, "password": formPassword}
             username_table.insert_one(userInfo)
-            return render_template("profile.html")
+            return render_template("profile.html", User=formUsername)
         else:
             desiredDict = username_table.find_one({"username": formUsername})
             if desiredDict["password"] == formPassword:
-                return render_template("profile.html")
+                return render_template("profile.html", User=formUsername)
             else:
                 return render_template("index.html")
         #userEntry(formUsername, formPassword)
