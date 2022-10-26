@@ -1,13 +1,11 @@
 <html>
   <head>
-    <title>Login page</title>
+    <title>Sign up page</title>
   </head>
   <body>
-    <h1>Fantasy Sports Login</h1>
+    <h1>Fantasy Sports Sign up</h1>
 
-    <p id="paragraph">Login big boi</p>
-
-    <form action="/" method="POST">
+    <form action="/signup" method="POST">
       <div class="container">
         <label for="uname"><b>Username</b></label>
         <input type="text" placeholder="Enter Username" name="uname" required />
@@ -20,10 +18,10 @@
           required
         />
 
-        <button type="submit">Login</button><br />
-        <a href="/signup">Go to signup page</a>
+        <button type="submit">Sign up</button><br />
+        <a href="/">Go back to login page</a>
       </div>
     </form>
-    <p>{{ loginStatus }}</p>
+    <p>{{ signUpStatus }}</p>
   </body>
 </html>
