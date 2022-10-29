@@ -1,7 +1,7 @@
 from flask import Flask, render_template
-from flask_pymongo import PyMongo
 import pymongo
 import flask
+import leagues
 
 app = Flask(__name__)
 
@@ -17,7 +17,7 @@ def sanitizeText(text):
 def validateText(text):
     return text and len(text.strip()) != 0
 @app.route('/', methods=['POST', 'GET'])
-def hello_world():  # put application's code here for login page
+def login():  # put application's code here for login page
     if flask.request.method == 'POST':
         formUsername = sanitizeText(flask.request.form['uname'])
         formPassword = flask.request.form['psw']
@@ -37,6 +37,11 @@ def hello_world():  # put application's code here for login page
         noWarning = ""
         return render_template("index.html", loginStatus=noWarning)
 
+@app.route('/profile',methods=['POST', 'GET'])
+def profileAction():
+    if flask.request.method == "GET":
+        return render_template("leaguesettings.html")
+
 @app.route('/signup', methods=['POST', 'GET'])
 def signup():
     if flask.request.method == 'POST':
@@ -54,6 +59,27 @@ def signup():
     else:
         return render_template("signup.html", signUpStatus="")
 
+@app.route('/changename', methods=['POST'])
+def change_name_form():
+    old_name = flask.request.form['oldname']
+    new_name = flask.request.form['newname']
+    result = leagues.change_name(old_name, new_name)
+    if not result:
+        print("Could not change name")
+    return render_template("index.html")
+
+@app.route('/league', methods=['POST', 'GET'])
+def league_creation_page():
+    if flask.request.method == 'POST':
+        lname = flask.request.form['lname']
+        plist = flask.request.form['plist'].split("\r\n")
+        result = leagues.create_league(lname, plist)
+        if not result:
+            print("Creation Failed")
+        leagues.set_points(lname, "ok", 100)
+        return render_template("index.html")
+    else:
+        return render_template("leaguesettings.html")
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0")

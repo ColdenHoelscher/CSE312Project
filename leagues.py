@@ -1,6 +1,7 @@
 import json
 
 import pymongo
+import app
 
 mongo_client = pymongo.MongoClient("mongo")
 database = mongo_client["312Project"]
