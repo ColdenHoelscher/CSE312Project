@@ -9,6 +9,14 @@ mongo_client = pymongo.MongoClient("mongo")
 database1 = mongo_client["312Project"]  # username database
 username_table = database1["usernames"]  # username collection
 
+pools = {
+    1: ["Luka Doncic", "Stephen Curry", "Ja Morant", "Trae Young", "Darius Garland"], #center
+    2: ["Luka Doncic", "Stephen Curry", "Ja Morant", "Trae Young", "Darius Garland"], #power forward
+    3: ["Luka Doncic", "Stephen Curry", "Ja Morant", "Trae Young", "Darius Garland"], #small forward
+    4: ["Luka Doncic", "Stephen Curry", "Ja Morant", "Trae Young", "Darius Garland"], #point guard
+    5: ["Luka Doncic", "Stephen Curry", "Ja Morant", "Trae Young", "Darius Garland"]  #shooting guard
+}
+
 def sanitizeText(text):
     if(not isinstance(text, str)):
         return
