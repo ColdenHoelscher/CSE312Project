@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 import pymongo
 import flask
 import leagues
@@ -37,7 +37,9 @@ def login():  # put application's code here for login page
         else:
             desiredDict = username_table.find_one({"username": formUsername})
             if desiredDict["password"] == formPassword:  # go to profile username and pw matched
-                return render_template("profile.html", User=formUsername)
+                #Implement code for viewing leagues
+                leaguesList = list(leagues.league_table.find({}))
+                return render_template("profile.html", User=formUsername, leagues=leaguesList)
             else:  # password incorrect
                 warning2 = "password incorrect"
                 return render_template("index.html", loginStatus=warning2)
@@ -45,7 +47,7 @@ def login():  # put application's code here for login page
         noWarning = ""
         return render_template("index.html", loginStatus=noWarning)
 
-@app.route('/profile',methods=['POST', 'GET'])
+@app.route('/profile',methods=['POST', 'GET'])  # goes to league creation page
 def profileAction():
     if flask.request.method == "GET":
         return render_template("leaguesettings.html")
@@ -62,8 +64,10 @@ def signup():
         if len(desiredEntry) != 0:
             return render_template("signup.html", signUpStatus="Username already exists")
 
-        username_table.insert_one({"username": formUsername, "password": formPassword})
-        return render_template("profile.html", User=formUsername)
+        # Implement code for viewing leagues
+        leaguesList = list(leagues.league_table.find({}))
+        username_table.insert_one({"username": formUsername, "password": formPassword, "joinedLeagues": [], "createdLeagues": []})
+        return render_template("profile.html", User=formUsername, leagues=leaguesList)
     else:
         return render_template("signup.html", signUpStatus="")
 
@@ -76,7 +80,7 @@ def change_name_form():
         print("Could not change name")
     return render_template("index.html")
 
-@app.route('/league', methods=['POST', 'GET'])
+@app.route('/makeleague', methods=['POST', 'GET'])
 def league_creation_page():
     if flask.request.method == 'POST':
         lname = flask.request.form['lname']
@@ -84,7 +88,14 @@ def league_creation_page():
         result = leagues.create_league(lname, plist)
         if not result:
             print("Creation Failed")
-        leagues.set_points(lname, "ok", 100)
+        # leagues.set_points(lname, "ok", 100)
+        # before return edit username table entry to show they created and joined this league
+        # retrievedDoc = username_table.find_one({"username": session["username"]})
+        # updatedCreated = retrievedDoc['createdLeagues']
+        # updatedJoined = retrievedDoc['joinedLeagues']
+        # updatedCreated.append(leagues.escape_all(lname))
+        # updatedJoined.append(leagues.escape_all(lname))
+        # username_table.updateOne({"username": session["username"]}, {"$set": {"joinedLeagues": updatedJoined, "createdLeagues": updatedCreated}})
         return render_template("index.html")
     else:
         return render_template("leaguesettings.html")

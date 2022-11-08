@@ -14,6 +14,26 @@
   <input type="submit" value="Create League">
 </form>
 
+<form action="/viewLeagues" method="get">
+  <label for="unjoined">Join a league:</label>
+  <select id="unjoined" name="unjoined">
+    {% for league in leagues %}
+        <option value={{ league.name }}>{{ league.name }}</option>
+    {% endfor %}
+  </select>
+  <input type="submit">
+</form>
+
+<form action="/viewJoinedL" method="get">
+  <label for="joined">View joined leagues:</label>
+  <select id="joined" name="joined">
+    {% for leagueJ in leaguesJ %}
+        <option value={{ leagueJ.name }}>{{ leagueJ.name }}</option>
+    {% endfor %}
+  </select>
+  <input type="submit">
+</form>
+
 
 </body>
 </html>
