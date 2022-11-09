@@ -28,7 +28,7 @@
   <label for="joined">View joined leagues:</label>
   <select id="joined" name="joined">
     {% for leagueJ in leaguesJ %}
-        <option value={{ leagueJ.name }}>{{ leagueJ.name }}</option>
+        <option value={{ leagueJ }}>{{ leagueJ }}</option>
     {% endfor %}
   </select>
   <input type="submit">

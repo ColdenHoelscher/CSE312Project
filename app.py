@@ -2,8 +2,10 @@ from flask import Flask, render_template, session
 import pymongo
 import flask
 import leagues
+import secretkey
 
 app = Flask(__name__)
+app.secret_key = secretkey.secretkey
 
 mongo_client = pymongo.MongoClient("mongo")
 database1 = mongo_client["312Project"]  # username database
@@ -39,7 +41,9 @@ def login():  # put application's code here for login page
             if desiredDict["password"] == formPassword:  # go to profile username and pw matched
                 #Implement code for viewing leagues
                 leaguesList = list(leagues.league_table.find({}))
-                return render_template("profile.html", User=formUsername, leagues=leaguesList)
+                joinedLeagues = desiredDict["joinedLeagues"]
+                session["username"] = formUsername  # Create cookie of username
+                return render_template("profile.html", User=formUsername, leagues=leaguesList, leaguesJ=joinedLeagues)
             else:  # password incorrect
                 warning2 = "password incorrect"
                 return render_template("index.html", loginStatus=warning2)
@@ -67,6 +71,7 @@ def signup():
         # Implement code for viewing leagues
         leaguesList = list(leagues.league_table.find({}))
         username_table.insert_one({"username": formUsername, "password": formPassword, "joinedLeagues": [], "createdLeagues": []})
+        session["username"] = formUsername  # Create cookie of username
         return render_template("profile.html", User=formUsername, leagues=leaguesList)
     else:
         return render_template("signup.html", signUpStatus="")
@@ -90,15 +95,43 @@ def league_creation_page():
             print("Creation Failed")
         # leagues.set_points(lname, "ok", 100)
         # before return edit username table entry to show they created and joined this league
-        # retrievedDoc = username_table.find_one({"username": session["username"]})
-        # updatedCreated = retrievedDoc['createdLeagues']
-        # updatedJoined = retrievedDoc['joinedLeagues']
-        # updatedCreated.append(leagues.escape_all(lname))
-        # updatedJoined.append(leagues.escape_all(lname))
-        # username_table.updateOne({"username": session["username"]}, {"$set": {"joinedLeagues": updatedJoined, "createdLeagues": updatedCreated}})
+        retrievedDoc = username_table.find_one({"username": session["username"]})
+        updatedCreated = retrievedDoc['createdLeagues']
+        updatedJoined = retrievedDoc['joinedLeagues']
+        updatedCreated.append(leagues.escape_all(lname))
+        updatedJoined.append(leagues.escape_all(lname))
+        username_table.update_one({"username": session["username"]}, {"$set": {"joinedLeagues": updatedJoined, "createdLeagues": updatedCreated}})
         return render_template("index.html")
     else:
         return render_template("leaguesettings.html")
+
+# This route puts the user selected league from view leagues menu into their joined leagues list if not already there
+@app.route('/viewLeagues', methods=['GET'])
+def joinLeague():
+    option = flask.request.args.get("unjoined")
+    validLeague = list(leagues.league_table.find({"name": option}))
+    if validLeague != 0:
+        retrievedDoc = username_table.find_one({"username": session["username"]})
+        updatedJoined = retrievedDoc['joinedLeagues']
+        if option not in updatedJoined:
+            updatedJoined.append(option)
+            username_table.update_one({"username": session["username"]}, {"$set": {"joinedLeagues": updatedJoined}})
+    leaguesList = list(leagues.league_table.find({}))
+    retDoc = username_table.find_one({"username": session["username"]})
+    finalJoined = retDoc['joinedLeagues']
+    return render_template("profile.html", User=session["username"], leagues=leaguesList, leaguesJ=finalJoined)
+
+@app.route('/viewJoinedL', methods=['GET'])
+def viewJoinedLeague():
+    option = flask.request.args.get("joined")
+    validLeague = list(leagues.league_table.find({"name": option}))
+    if validLeague != 0:
+        return render_template("startleague.html")
+    else:
+        leaguesList = list(leagues.league_table.find({}))
+        retDoc = username_table.find_one({"username": session["username"]})
+        finalJoined = retDoc['joinedLeagues']
+        return render_template("profile.html", User=session["username"], leagues=leaguesList, leaguesJ=finalJoined)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0")
