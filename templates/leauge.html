@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <title> Leaderboard </title>
+    </head>
+    <body>
+        <h1> View Leaderboard </h1>
+        <form action="/leaderboard" method="POST">
+            <div class="container"></div>
+              <label for="leauge"><b>Name of leauge:</b></label>
+              <input type="text" placeholder="Enter Leauge Name" name= "leauge" required />
+              <br />
+              <button type="submit">Submit</button><br />
+              <p>{{leaderboard}}</p>
+    </body>
+</html>
