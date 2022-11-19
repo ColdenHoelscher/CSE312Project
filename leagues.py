@@ -1,25 +1,22 @@
-import json
-
 import pymongo
 
 mongo_client = pymongo.MongoClient("mongo")
 database = mongo_client["312Project"]
 league_table = database["leagues"]
-player_table = database["players"]
 
 
 # Returns true if successful, false if not.
-def create_league(name, players):
+def create_league(name):
     result = list(league_table.find({"name": name}))
     if len(result) != 0:
         return False
-    pnames = []
-    for player in players:
-        player_name = escape_all(player)
-        pnames.append(player_name)
-        player_table.insert_one({"name": player_name, "points": 0})
-    ldata = {"name": escape_all(name), "players": pnames}
-    league_table.insert_one(ldata)
+    player_names = []
+    player_file = open("playerlist.txt", 'r')
+    players = player_file.readlines()
+    for p in players:
+        player_names.append(p.strip())
+    league_data = {"name": escape_all(name), "isDrafting": False, "players": player_names}
+    league_table.insert_one(league_data)
     return True
 
 
