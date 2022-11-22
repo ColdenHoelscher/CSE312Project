@@ -2,7 +2,8 @@ from flask import Flask, render_template, session
 from flask_socketio import SocketIO, emit
 import pymongo
 import flask
-
+import bcrypt
+import secrets
 import draft
 import leagues
 import secretkey
@@ -48,14 +49,17 @@ def login():  # put application's code here for login page
             return render_template("index.html", loginStatus=warning1)
         else:
             desiredDict = username_table.find_one({"username": formUsername})
-            if desiredDict["password"] == formPassword:  # go to profile username and pw matched
+            if bcrypt.checkpw(formPassword.encode(), desiredDict["password"]):  # go to profile username and pw matched
+                # Update authToken
+                token = secrets.token_hex(20)
+                hashedToken = bcrypt.hashpw(token.encode(), bcrypt.gensalt())
+                username_table.update_one({"username": formUsername}, {"$set": {"authToken": hashedToken}})
+                session["token"] = hashedToken  # Create cookie for authentication token
                 # Implement code for viewing leagues
                 leaguesList = list(leagues.league_table.find({}))
                 joinedLeagues = desiredDict["joinedLeagues"]
                 ownedLeagues = desiredDict["createdLeagues"]
-                session["username"] = formUsername  # Create cookie of username
-                return render_template("profile.html", User=formUsername, leagues=leaguesList, leaguesJ=joinedLeagues,
-                                       leaguesC=ownedLeagues)
+                return render_template("profile.html", User=formUsername, leagues=leaguesList, leaguesJ=joinedLeagues, leaguesC=ownedLeagues)
             else:  # password incorrect
                 warning2 = "password incorrect"
                 return render_template("index.html", loginStatus=warning2)
@@ -67,7 +71,7 @@ def login():  # put application's code here for login page
 @app.route('/profile', methods=['POST', 'GET'])  # goes to league creation page
 def profileAction():
     if flask.request.method == "GET":
-        if not session.get("username"):
+        if not session.get("token"):
             return render_template("index.html")
         return render_template("leaguesettings.html")
 
@@ -77,8 +81,7 @@ def signup():
     if flask.request.method == 'POST':
         formUsername = sanitizeText(flask.request.form['uname'])
         formPassword = flask.request.form['psw']
-        if (not validateText(formUsername) and not validateText(
-                formPassword)):  # check to make sure its not empty or null
+        if (not validateText(formUsername) and not validateText(formPassword)):  # check to make sure its not empty or null
             return render_template("signup.html", signUpStatus="Invalid input")
 
         desiredEntry = list(username_table.find({"username": formUsername}))
@@ -87,9 +90,12 @@ def signup():
 
         # Implement code for viewing leagues
         leaguesList = list(leagues.league_table.find({}))
-        username_table.insert_one(
-            {"username": formUsername, "password": formPassword, "joinedLeagues": [], "createdLeagues": []})
-        session["username"] = formUsername  # Create cookie of username
+        # store salted hash of psw, create token for cookie, store hashed token
+        hashedPW = bcrypt.hashpw(formPassword.encode(), bcrypt.gensalt())
+        token = secrets.token_hex(20)
+        hashedToken = bcrypt.hashpw(token.encode(), bcrypt.gensalt())
+        username_table.insert_one({"username": formUsername, "password": hashedPW, "authToken": hashedToken, "joinedLeagues": [], "createdLeagues": []})
+        session["token"] = hashedToken  # Create cookie for authentication token
         return render_template("profile.html", User=formUsername, leagues=leaguesList)
     else:
         return render_template("signup.html", signUpStatus="")
@@ -114,13 +120,12 @@ def league_creation_page():
             print("Creation Failed")
         # leagues.set_points(lname, "ok", 100)
         # before return edit username table entry to show they created and joined this league
-        retrievedDoc = username_table.find_one({"username": session["username"]})
+        retrievedDoc = username_table.find_one({"authToken": session["token"]})
         updatedCreated = retrievedDoc['createdLeagues']
         updatedJoined = retrievedDoc['joinedLeagues']
         updatedCreated.append(leagues.escape_all(lname))
         updatedJoined.append(leagues.escape_all(lname))
-        username_table.update_one({"username": session["username"]},
-                                  {"$set": {"joinedLeagues": updatedJoined, "createdLeagues": updatedCreated}})
+        username_table.update_one({"authToken": session["token"]}, {"$set": {"joinedLeagues": updatedJoined, "createdLeagues": updatedCreated}})
         return render_template("index.html")
     else:
         return render_template("leaguesettings.html")
@@ -132,16 +137,16 @@ def joinLeague():
     option = flask.request.args.get("unjoined")
     validLeague = list(leagues.league_table.find({"name": option}))
     if validLeague != 0:
-        retrievedDoc = username_table.find_one({"username": session["username"]})
+        retrievedDoc = username_table.find_one({"authToken": session["token"]})
         updatedJoined = retrievedDoc['joinedLeagues']
         if option not in updatedJoined:
             updatedJoined.append(option)
-            username_table.update_one({"username": session["username"]}, {"$set": {"joinedLeagues": updatedJoined}})
+            username_table.update_one({"authToken": session["token"]}, {"$set": {"joinedLeagues": updatedJoined}})
     leaguesList = list(leagues.league_table.find({}))
-    retDoc = username_table.find_one({"username": session["username"]})
+    retDoc = username_table.find_one({"authToken": session["token"]})
     finalJoined = retDoc['joinedLeagues']
 
-    return render_template("profile.html", User=session["username"], leagues=leaguesList, leaguesJ=finalJoined)
+    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined)
 
 
 @app.route('/viewJoinedL', methods=['GET'])
@@ -152,9 +157,9 @@ def viewJoinedLeague():
         return render_template("startleague.html")
     else:
         leaguesList = list(leagues.league_table.find({}))
-        retDoc = username_table.find_one({"username": session["username"]})
+        retDoc = username_table.find_one({"authToken": session["token"]})
         finalJoined = retDoc['joinedLeagues']
-        return render_template("profile.html", User=session["username"], leagues=leaguesList, leaguesJ=finalJoined)
+        return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined)
 
 
 @socketio.on('start draft')
