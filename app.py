@@ -75,6 +75,12 @@ def profileAction():
             return render_template("index.html")
         return render_template("leaguesettings.html")
 
+@app.route('/logout', methods=['GET'])  # logs user out returning to index.html and invalidating token cookie
+def logoutAction():
+    if flask.request.method == 'GET':
+        session["token"] = b'invalid'  # Doesn't match old token stored in database
+        return render_template("index.html")
+
 
 @app.route('/signup', methods=['POST', 'GET'])
 def signup():
