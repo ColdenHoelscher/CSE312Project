@@ -8,7 +8,7 @@ import draft
 import leagues
 import secretkey
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path='')
 app.secret_key = secretkey.secretkey
 app.config['SECRET_KEY'] = secretkey.secretkey
 socketio = SocketIO(app)
@@ -39,8 +39,15 @@ def sanitizeText(text):
 def validateText(text):
     return text and len(text.strip()) != 0
 
+@app.route('/')
+def homePage():  # put application's code here for login page
+    return render_template("index.html")
 
-@app.route('/', methods=['POST', 'GET'])
+@app.route("/style.css")
+def styling():
+    return
+
+@app.route('/login', methods=['POST', 'GET'])
 def login():  # put application's code here for login page
     if flask.request.method == 'POST':
         formUsername = sanitizeText(flask.request.form['uname'])
