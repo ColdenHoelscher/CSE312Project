@@ -1,14 +1,14 @@
 <html>
   <head>
-    <title>Sign up page</title>
+    <title>Login page</title>
     <link href="/css/style.css" rel="stylesheet" />
   </head>
   <body>
     <img src="/img/logo.png" alt="Fantasy Logo" class="header--logo-image" />
 
-    <form action="/signup" method="POST" class="credentials">
-      <h2 class="credentials-header">Fantasy Basketball Sign up</h2>
+    <form action="/login" method="POST" class="credentials credentials-all">
       <div class="container">
+        <h2 class="credentials-header">Fantasy Basketball Login</h2>
         <label for="uname" class="credentials-label credentials-all"
           ><b>Username</b></label
         >
@@ -20,7 +20,7 @@
           class="credentials-input credentials-all"
         />
         <br />
-        <label for="psw" class="credentials-label credentials-all"
+        <label class="credentials-label credentials-all" for="psw"
           ><b>Password</b></label
         >
         <input
@@ -30,12 +30,13 @@
           required
           class="credentials-input credentials-all"
         />
+
         <div class="action-buttons--form">
-          <button type="submit">Sign up</button>
+          <button type="submit">Login</button>
           <a href="/"><button type="button">Home page</button></a>
         </div>
       </div>
     </form>
-    <p>{{ signUpStatus }}</p>
+    <p>{{ loginStatus }}</p>
   </body>
 </html>
