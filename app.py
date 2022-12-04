@@ -1,5 +1,5 @@
 from flask import Flask, render_template, session
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, send
 import pymongo
 import flask
 import bcrypt
@@ -16,6 +16,9 @@ socketio = SocketIO(app)
 mongo_client = pymongo.MongoClient("mongo")
 database1 = mongo_client["312Project"]  # username database
 username_table = database1["usernames"]  # username collection
+draft_table = database1["drafting"]  # draft info
+roster_table = database1["rosters"]
+
 
 
 # pools = {
@@ -59,7 +62,9 @@ def login():  # put application's code here for login page
                 leaguesList = list(leagues.league_table.find({}))
                 joinedLeagues = desiredDict["joinedLeagues"]
                 ownedLeagues = desiredDict["createdLeagues"]
-                return render_template("profile.html", User=formUsername, leagues=leaguesList, leaguesJ=joinedLeagues, leaguesC=ownedLeagues)
+                do_draft = decideUserTurn()
+                return render_template("profile.html", User=formUsername, leagues=leaguesList, leaguesJ=joinedLeagues, leaguesC=ownedLeagues,
+                                       doSocket=do_draft)
             else:  # password incorrect
                 warning2 = "password incorrect"
                 return render_template("index.html", loginStatus=warning2)
@@ -102,7 +107,8 @@ def signup():
         hashedToken = bcrypt.hashpw(token.encode(), bcrypt.gensalt())
         username_table.insert_one({"username": formUsername, "password": hashedPW, "authToken": hashedToken, "joinedLeagues": [], "createdLeagues": []})
         session["token"] = hashedToken  # Create cookie for authentication token
-        return render_template("profile.html", User=formUsername, leagues=leaguesList)
+        do_draft = decideUserTurn()
+        return render_template("profile.html", User=formUsername, leagues=leaguesList, doSocket=do_draft)
     else:
         return render_template("signup.html", signUpStatus="")
 
@@ -151,8 +157,8 @@ def joinLeague():
     leaguesList = list(leagues.league_table.find({}))
     retDoc = username_table.find_one({"authToken": session["token"]})
     finalJoined = retDoc['joinedLeagues']
-
-    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined)
+    do_draft = decideUserTurn()
+    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined, doSocket=do_draft)
 
 
 @app.route('/viewJoinedL', methods=['GET'])
@@ -165,13 +171,102 @@ def viewJoinedLeague():
         leaguesList = list(leagues.league_table.find({}))
         retDoc = username_table.find_one({"authToken": session["token"]})
         finalJoined = retDoc['joinedLeagues']
-        return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined)
+        do_draft = decideUserTurn()
+        return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined, doSocket=do_draft)
 
 
-@socketio.on('start draft')
-def call_draft(incoming):
-    print('received: ' + str(incoming))
-    draft.start_draft(str(incoming))
+@app.route('/draft', methods=['GET'])
+def doDraft():
+    option = flask.request.args.get("owned")
+    # Update league_table isDrafting and add entry to draft_table
+    random_list = draft.start_draft(option)
+    league_data = leagues.league_table.find_one({"name": option})
+    picks_left = {}
+    for user in random_list:
+        picks_left[user] = 5  # each user will have 5 picks initially (this number will decrement with every pick)
+    draft_entry = {"leagueName": option, "unpickedPlayers": league_data["players"], "picksLeft": picks_left, "userList": random_list}
+    draft_table.insert_one(draft_entry)
+    # Now reload profile html and conditional decides if websocket connection will establish
+    retDoc = username_table.find_one({"authToken": session["token"]})
+    leaguesList = list(leagues.league_table.find({}))
+    finalJoined = retDoc['joinedLeagues']
+    do_draft = decideUserTurn()
+    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined, doSocket=do_draft)
+
+def decideUserTurn():
+    wanted_entry = username_table.find_one({"authToken": session["token"]})
+    # Iterate through joinedLeagues and check if they are drafting and username in front of userList in league
+    username = wanted_entry['username']
+    joined_leagues = wanted_entry["joinedLeagues"]
+    for league in joined_leagues:
+        league_data = leagues.league_table.find_one({"name": league})
+        if league_data["isDrafting"] == True:  # Check if draft in progress
+            draft_data = draft_table.find_one({"leagueName": league})
+            user_list = draft_data['userList']
+            if username in user_list and user_list[0] == username:  # Check if it's the user's turn
+                return True
+    return False
+
+@socketio.on('message')
+def updateRoster(pick):
+    print("User: " + pick)
+    # check if roster_table has matching league entry, if not make one
+    # first get draft_table entry
+    wanted_entry = username_table.find_one({"authToken": session["token"]})
+    username = wanted_entry['username']
+    draft_league = list(draft_table.find({}))
+    draft_info = draft_league[0]  # simple placeholder for now until loop below finishes
+    for entry in draft_league:
+        if username in entry['userList']:
+            draft_info = entry  # draft_info now has needed picksLeft and userList
+    roster_entry = list(roster_table.find({"leagueName": draft_info['leagueName']}))
+    if len(roster_entry) == 0:
+        scoresDict = {}
+        rosterDict = {}
+        for aVal in draft_info['userList']:
+            scoresDict[aVal] = 0
+            rosterDict[aVal] = []
+        enter_dict = {"leagueName": draft_info['leagueName'], "scoresDict": scoresDict, "rosterDict": rosterDict}
+        roster_table.insert_one(enter_dict)
+    # now process pick using draft_info and roster_entry[0]
+    remaining_players = draft_info['unpickedPlayers']
+    if pick == "see players":  # if user wants to see available players send them that
+        player_message = ""
+        for aPlayer in remaining_players:
+            player_message = player_message + "\n" + aPlayer
+        send(player_message)
+    # do this if they don't wish to see available players
+    else:
+        picks_dict = draft_info['picksLeft']
+        picks_remaining = picks_dict[username]
+        if pick in remaining_players:
+            if picks_remaining > 0:
+                message = pick + "added to roster."
+                # update rosterDict
+                wantedRosterEntry = roster_table.find_one({"leagueName": draft_info['leagueName']})
+                oldRosterDict = wantedRosterEntry['rosterDict']
+                oldRosterList = oldRosterDict[username]
+                oldRosterList.append(pick)
+                oldRosterDict[username] = oldRosterList
+                roster_table.update_one({"leagueName": draft_info['leagueName']}, {"$set": {"rosterDict": oldRosterDict}})
+                # update unpickedPlayers and picksLeft
+                remaining_players.remove(pick)
+                picks_user = draft_info['picksLeft']
+                new_number_left = picks_user[username] - 1
+                picks_user[username] = new_number_left
+                draft_table.update_one({"leagueName": draft_info['leagueName']}, {"$set": {"unpickedPlayers": remaining_players, "picksLeft": picks_user}})
+                # if picksLeft now zero update userList
+                if new_number_left == 0:
+                    old_user_list = draft_info['userList']
+                    old_user_list.remove(username)
+                    draft_table.update_one({"leagueName": draft_info['leagueName']}, {"$set": {"userList": old_user_list}})
+                send(message)
+            else:  # inform user they used up their picks
+                no_picks = "No more picks left"
+                send(no_picks)
+        else:  # inform user player isn't available
+            not_available = "Player isn't available"
+            send(not_available)
 
 
 if __name__ == '__main__':

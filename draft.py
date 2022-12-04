@@ -18,9 +18,14 @@ def start_draft(league_name):
         print("Could not start draft, drafting already in progress.")
         return False
     # Set variable to true, locking anyone from joining the league
-    league['isDrafting'] = True
-    league_members = list(user_table.find({"joinedLeagues": league_name}))
-    random.shuffle(league_members)
-    print(league_members)
+    league_table.update_one({"name": league_name}, {"$set": {"isDrafting": True}})
+    # Find users in league and randomly shuffle list
+    league_members = list(user_table.find({}))
+    user_list = []
+    for anEntry in league_members:
+        if league_name in anEntry["joinedLeagues"]:
+            user_list.append(anEntry["username"])
+    random.shuffle(user_list)
+    return user_list
 
     

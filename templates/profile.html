@@ -1,6 +1,8 @@
 <html>
 <head>
     <title>Profile page</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -42,26 +44,45 @@
     <label for="owned">Your leagues:</label>
     <select id="owned" name="owned">
       {% for leagueC in leaguesC %}
-        <option id="to-draft" value={{ leagueC }}>{{ leagueC }}</option>
+        <option value={{ leagueC }}>{{ leagueC }}</option>
       {% endfor %}}
     </select>
-    <input id="draft-button" type="submit" value="Start Draft" onclick="beginDraft()">
+    <input type="submit">
 </form>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-    <script type="text/javascript" charset="utf-8">
-    const socket = io();
-    socket.on('connect', function() {
-        console.log("Socket Connected.")
-    });
 
-    socket.on("draft", (...args) => {
-        window.location.href = "/draft"
-    });
+{% if doSocket %}
+<p>Pick your roster!</p>
+<p>To see available players to pick send "see players"</p>
 
-    function beginDraft(){
-        let x = document.getElementById("owned")
-        socket.emit('start draft', x.value);
-    }
-    </script>
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function(){
+        var socket = io.connect("http://localhost:8080");
+        socket.on('connect', function() {
+            socket.send("User connected");
+        });
+
+        socket.on('message', function(data){
+            $('#response').append($('<p>').text(data));
+        });
+
+        $('#sendit').on('click', function(){
+            socket.send($('#message').val());
+            $('#message').val('');
+        });
+
+    })
+
+</script>
+<div id="response">
+
+</div>
+<input type="text" id="message" placeholder="Message">
+<button id="sendit">Pick</button>
+
+
+{% else %}
+<p>You currently don't have to pick your roster in any of your leagues.</p>
+{% endif %}
+
 </body>
 </html>
