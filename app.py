@@ -8,7 +8,7 @@ import draft
 import leagues
 import secretkey
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path='')
 app.secret_key = secretkey.secretkey
 app.config['SECRET_KEY'] = secretkey.secretkey
 socketio = SocketIO(app)
@@ -37,42 +37,19 @@ def validateText(text):
     return text and len(text.strip()) != 0
 
 
-@app.route('/', methods=['POST', 'GET'])
-def login():  # put application's code here for login page
-    if flask.request.method == 'POST':
-        formUsername = sanitizeText(flask.request.form['uname'])
-        formPassword = flask.request.form['psw']
+@app.route('/')
+def homePage():  # put application's code here for login page
+    return render_template("index.html")
 
-        desiredEntry = list(username_table.find({"username": formUsername}))
-        if len(desiredEntry) == 0:  # username is not in the database
-            warning1 = "No account associated with this username."
-            return render_template("index.html", loginStatus=warning1)
-        else:
-            desiredDict = username_table.find_one({"username": formUsername})
-            if bcrypt.checkpw(formPassword.encode(), desiredDict["password"]):  # go to profile username and pw matched
-                # Update authToken
-                token = secrets.token_hex(20)
-                hashedToken = bcrypt.hashpw(token.encode(), bcrypt.gensalt())
-                username_table.update_one({"username": formUsername}, {"$set": {"authToken": hashedToken}})
-                session["token"] = hashedToken  # Create cookie for authentication token
-                # Implement code for viewing leagues
-                leaguesList = list(leagues.league_table.find({}))
-                joinedLeagues = desiredDict["joinedLeagues"]
-                ownedLeagues = desiredDict["createdLeagues"]
-                return render_template("profile.html", User=formUsername, leagues=leaguesList, leaguesJ=joinedLeagues, leaguesC=ownedLeagues)
-            else:  # password incorrect
-                warning2 = "password incorrect"
-                return render_template("index.html", loginStatus=warning2)
-    else:
-        noWarning = ""
-        return render_template("index.html", loginStatus=noWarning)
-
+@app.route("/style.css")
+def styling():
+    return 
 
 @app.route('/profile', methods=['POST', 'GET'])  # goes to league creation page
 def profileAction():
     if flask.request.method == "GET":
         if not session.get("token"):
-            return render_template("index.html")
+            return render_template("login.html")
         return render_template("leaguesettings.html")
 
 @app.route('/logout', methods=['GET'])  # logs user out returning to index.html and invalidating token cookie
@@ -106,6 +83,34 @@ def signup():
     else:
         return render_template("signup.html", signUpStatus="")
 
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    if flask.request.method == 'POST':
+        formUsername = sanitizeText(flask.request.form['uname'])
+        formPassword = flask.request.form['psw']
+
+        desiredEntry = list(username_table.find({"username": formUsername}))
+        if len(desiredEntry) == 0:  # username is not in the database
+            warning1 = "No account associated with this username."
+            return render_template("login.html", loginStatus=warning1)
+        else:
+            desiredDict = username_table.find_one({"username": formUsername})
+            if bcrypt.checkpw(formPassword.encode(), desiredDict["password"]):  # go to profile username and pw matched
+                # Update authToken
+                token = secrets.token_hex(20)
+                hashedToken = bcrypt.hashpw(token.encode(), bcrypt.gensalt())
+                username_table.update_one({"username": formUsername}, {"$set": {"authToken": hashedToken}})
+                session["token"] = hashedToken  # Create cookie for authentication token
+                # Implement code for viewing leagues
+                leaguesList = list(leagues.league_table.find({}))
+                joinedLeagues = desiredDict["joinedLeagues"]
+                ownedLeagues = desiredDict["createdLeagues"]
+                return render_template("profile.html", User=formUsername, leagues=leaguesList, leaguesJ=joinedLeagues, leaguesC=ownedLeagues)
+            else:  # password incorrect
+                warning2 = "password incorrect"
+                return render_template("login.html", loginStatus=warning2)
+    else:
+        return render_template("login.html")
 
 @app.route('/changename', methods=['POST'])
 def change_name_form():
@@ -114,8 +119,8 @@ def change_name_form():
     result = leagues.change_name(old_name, new_name)
     if not result:
         print("Could not change name")
-    return render_template("index.html")
-
+    return render_template("login.html")
+        
 
 @app.route('/makeleague', methods=['POST', 'GET'])
 def league_creation_page():
@@ -132,7 +137,7 @@ def league_creation_page():
         updatedCreated.append(leagues.escape_all(lname))
         updatedJoined.append(leagues.escape_all(lname))
         username_table.update_one({"authToken": session["token"]}, {"$set": {"joinedLeagues": updatedJoined, "createdLeagues": updatedCreated}})
-        return render_template("index.html")
+        return render_template("login.html")
     else:
         return render_template("leaguesettings.html")
 

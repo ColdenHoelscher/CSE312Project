@@ -1,67 +1,71 @@
 <html>
-<head>
+  <head>
     <title>Profile page</title>
-</head>
-<body>
+    <link href="/css/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <img src="/img/logo.png" alt="Fantasy Logo" class="header--logo-image" />
 
-<h1>{{ User }}'s profile</h1>
+    <h1>{{ User }}'s profile</h1>
 
-<p id="paragraph">
-    This is your profile
-</p>
+    <p id="paragraph">This is your profile</p>
 
-<form action="/logout" method="get">
-  <input type="submit" value="Logout">
-</form>
+    <button onclick="location.href='/logout'">Logout</button>
+    <button onclick="location.href='/profile'">Create League</button>
 
-<form action="/profile" method="get">
-  <input type="submit" value="Create League">
-</form>
+    <form action="/viewLeagues" method="get">
+      <label for="unjoined">Join a league:</label>
+      <select id="unjoined" name="unjoined">
+        {% for league in leagues %}
+        <option value="{{ league.name }}">{{ league.name }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" />
+    </form>
 
-<form action="/viewLeagues" method="get">
-  <label for="unjoined">Join a league:</label>
-  <select id="unjoined" name="unjoined">
-    {% for league in leagues %}
-        <option value={{ league.name }}>{{ league.name }}</option>
-    {% endfor %}
-  </select>
-  <input type="submit">
-</form>
+    <form action="/viewJoinedL" method="get">
+      <label for="joined">View joined leagues:</label>
+      <select id="joined" name="joined">
+        {% for leagueJ in leaguesJ %}
+        <option value="{{ leagueJ }}">{{ leagueJ }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" />
+    </form>
 
-<form action="/viewJoinedL" method="get">
-  <label for="joined">View joined leagues:</label>
-  <select id="joined" name="joined">
-    {% for leagueJ in leaguesJ %}
-        <option value={{ leagueJ }}>{{ leagueJ }}</option>
-    {% endfor %}
-  </select>
-  <input type="submit">
-</form>
-
-<form action="/draft" method="get">
-    <label for="owned">Your leagues:</label>
-    <select id="owned" name="owned">
-      {% for leagueC in leaguesC %}
-        <option id="to-draft" value={{ leagueC }}>{{ leagueC }}</option>
-      {% endfor %}}
-    </select>
-    <input id="draft-button" type="submit" value="Start Draft" onclick="beginDraft()">
-</form>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <form action="/draft" method="get">
+      <label for="owned">Your leagues:</label>
+      <select id="owned" name="owned">
+        {% for leagueC in leaguesC %}
+        <option id="to-draft" value="{{ leagueC }}">{{ leagueC }}</option>
+        {% endfor %}}
+      </select>
+      <input
+        id="draft-button"
+        type="submit"
+        value="Start Draft"
+        onclick="beginDraft()"
+      />
+    </form>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
     <script type="text/javascript" charset="utf-8">
-    const socket = io();
-    socket.on('connect', function() {
-        console.log("Socket Connected.")
-    });
+      const socket = io();
+      socket.on("connect", function () {
+        console.log("Socket Connected.");
+      });
 
-    socket.on("draft", (...args) => {
-        window.location.href = "/draft"
-    });
+      socket.on("draft", (...args) => {
+        window.location.href = "/draft";
+      });
 
-    function beginDraft(){
-        let x = document.getElementById("owned")
-        socket.emit('start draft', x.value);
-    }
+      function beginDraft() {
+        let x = document.getElementById("owned");
+        socket.emit("start draft", x.value);
+      }
     </script>
-</body>
+  </body>
 </html>
