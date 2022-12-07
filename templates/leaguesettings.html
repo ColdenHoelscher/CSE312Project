@@ -10,7 +10,13 @@
     <form action="/makeleague" method="POST">
       <div class="container">
         <label for="lname"><b>League Name:</b></label>
-        <input type="text" placeholder="League Name" name="lname" required />
+        <input
+          type="text"
+          placeholder="League Name"
+          name="lname"
+          required
+          style="color: black"
+        />
         <br />
         <label for="plist"><b>Player List:</b></label>
         <br />
@@ -19,6 +25,7 @@
           name="plist"
           cols="40"
           rows="6"
+          style="color: black"
         ></textarea>
         <br />
         <button type="submit">Create</button>
@@ -28,10 +35,22 @@
     <form action="/changename" method="POST">
       <div class="container">
         <label for="oldname"><b>League Name:</b></label>
-        <input type="text" placeholder="League Name" name="oldname" required />
+        <input
+          type="text"
+          placeholder="League Name"
+          name="oldname"
+          required
+          style="color: black"
+        />
         <br />
         <label for="newname"><b>New Name:</b></label>
-        <input type="text" placeholder="New Name" name="newname" required />
+        <input
+          type="text"
+          placeholder="New Name"
+          name="newname"
+          required
+          style="color: black"
+        />
         <br />
         <button type="submit">Update</button>
       </div>

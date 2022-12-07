@@ -1,85 +1,80 @@
 <html>
-<head>
+  <head>
     <title>Profile page</title>
     <link href="/css/style.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
-</head>
-<body>
+  </head>
+  <body>
+    <div class="header">
+      <img src="/img/logo.png" alt="Fantasy Logo" class="header--logo-image" />
+      <button onclick="location.href='/logout'">Logout</button>
+    </div>
 
-<img src="/img/logo.png" alt="Fantasy Logo" class="header--logo-image" />
-<h1>{{ User }}'s profile</h1>
+    <h1>{{ User }}'s profile</h1>
 
-<p id="paragraph">
-    This is your profile
-</p>
+    <p id="paragraph">This is your profile</p>
 
-<button onclick="location.href='/logout'">Logout</button>
-<button onclick="location.href='/profile'">Create League</button>
+    <button onclick="location.href='/profile'">Create League</button>
+    <div class="profile-form">
+      <form action="/viewLeagues" method="get">
+        <label for="unjoined">Join a league:</label>
+        <select id="unjoined" name="unjoined" style="color: black">
+          {% for league in leagues %}
+          <option value="{{league.name }}">{{ league.name }}</option>
+          {% endfor %}
+        </select>
+        <input type="submit" class="input-submit" />
+      </form>
 
-<form action="/viewLeagues" method="get">
-  <label for="unjoined">Join a league:</label>
-  <select id="unjoined" name="unjoined">
-    {% for league in leagues %}
-        <option value={{ league.name }}>{{ league.name }}</option>
-    {% endfor %}
-  </select>
-  <input type="submit">
-</form>
+      <form action="/viewJoinedL" method="get">
+        <label for="joined">View joined leagues:</label>
+        <select id="joined" name="joined" style="color: black">
+          {% for leagueJ in leaguesJ %}
+          <option value="{{ leagueJ }}">{{ leagueJ }}</option>
+          {% endfor %}
+        </select>
+        <input type="submit" class="input-submit" />
+      </form>
 
-<form action="/viewJoinedL" method="get">
-  <label for="joined">View joined leagues:</label>
-  <select id="joined" name="joined">
-    {% for leagueJ in leaguesJ %}
-        <option value={{ leagueJ }}>{{ leagueJ }}</option>
-    {% endfor %}
-  </select>
-  <input type="submit">
-</form>
+      <form action="/draft" method="get">
+        <label for="owned">Your leagues:</label>
+        <select id="owned" name="owned" style="color: black">
+          {% for leagueC in leaguesC %}
+          <option value="{{ leagueC }}">{{ leagueC }}</option>
+          {% endfor %}}
+        </select>
+        <input type="submit" class="input-submit" />
+      </form>
+    </div>
 
-<form action="/draft" method="get">
-    <label for="owned">Your leagues:</label>
-    <select id="owned" name="owned">
-      {% for leagueC in leaguesC %}
-        <option value={{ leagueC }}>{{ leagueC }}</option>
-      {% endfor %}}
-    </select>
-    <input type="submit">
-</form>
+    {% if doSocket %}
+    <p>Pick your roster!</p>
+    <p>To see available players to pick send "see players"</p>
 
-{% if doSocket %}
-<p>Pick your roster!</p>
-<p>To see available players to pick send "see players"</p>
-
-<script type="text/javascript" charset="utf-8">
-    $(document).ready(function(){
+    <script type="text/javascript" charset="utf-8">
+      $(document).ready(function () {
         var socket = io.connect("http://localhost:8080");
-        socket.on('connect', function() {
-            socket.send("User connected");
+        socket.on("connect", function () {
+          socket.send("User connected");
         });
 
-        socket.on('message', function(data){
-            $('#response').append($('<p>').text(data));
+        socket.on("message", function (data) {
+          $("#response").append($("<p>").text(data));
         });
 
-        $('#sendit').on('click', function(){
-            socket.send($('#message').val());
-            $('#message').val('');
+        $("#sendit").on("click", function () {
+          socket.send($("#message").val());
+          $("#message").val("");
         });
+      });
+    </script>
+    <div id="response"></div>
+    <input type="text" id="message" placeholder="Message" />
+    <button id="sendit">Pick</button>
 
-    })
-
-</script>
-<div id="response">
-
-</div>
-<input type="text" id="message" placeholder="Message">
-<button id="sendit">Pick</button>
-
-
-{% else %}
-<p>You currently don't have to pick your roster in any of your leagues.</p>
-{% endif %}
-
-</body>
+    {% else %}
+    <p>You currently don't have to pick your roster in any of your leagues.</p>
+    {% endif %}
+  </body>
 </html>
