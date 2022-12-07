@@ -316,7 +316,7 @@ def updateRoster(pick):
             send(not_available)
 
 
-@app.route('/logstats', methods=['GET','POST'])
+@app.route('/logstats', methods=['GET', 'POST'])
 def stat_that():
     if flask.request.method == 'POST':
         username_entry = []
@@ -340,7 +340,7 @@ def stat_that():
             if ('username', form_username) in x.items():
                 zam = True
         entry = username_entry
-        print(entry) #CURRENT ISSUE 6:14
+        print(entry)  # CURRENT ISSUE 6:14
         if len(username_entry) == 0 or zam == False:
             return render_template("stats.html",leaderboard = "Invalid user or leauge")
         entry = {"leauge":form_leaugename,"username":form_username,"points":form_points,"assists":form_assists,"rebounds":form_rebounds}
@@ -360,7 +360,7 @@ def stat_that():
         return render_template("stats.html",leaderboard = "")
 
 
-@app.route('/leaderboard', methods = ['GET','POST'])
+@app.route('/leaderboard', methods=['GET', 'POST'])
 def leaders():
     if flask.request.method == 'POST':
         form_leaugename = sanitizeText(flask.request.form['leauge'])
