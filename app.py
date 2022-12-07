@@ -52,7 +52,7 @@ def login():  # put application's code here for login page
         desiredEntry = list(username_table.find({"username": formUsername}))
         if len(desiredEntry) == 0:  # username is not in the database
             warning1 = "No account associated with this username."
-            return render_template("index.html", loginStatus=warning1)
+            return render_template("login.html", loginStatus=warning1)
         else:
             desiredDict = username_table.find_one({"username": formUsername})
             if bcrypt.checkpw(formPassword.encode(), desiredDict["password"]):  # go to profile username and pw matched
@@ -70,10 +70,10 @@ def login():  # put application's code here for login page
                                        doSocket=do_draft)
             else:  # password incorrect
                 warning2 = "password incorrect"
-                return render_template("index.html", loginStatus=warning2)
+                return render_template("login.html", loginStatus=warning2)
     else:
         noWarning = ""
-        return render_template("index.html", loginStatus=noWarning)
+        return render_template("login.html", loginStatus=noWarning)
 
 
 @app.route('/profile', methods=['POST', 'GET'])  # goes to league creation page
