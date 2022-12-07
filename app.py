@@ -11,7 +11,7 @@ import leaderboard
 import stats
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path='')
 app.secret_key = secretkey.secretkey
 app.config['SECRET_KEY'] = secretkey.secretkey
 socketio = SocketIO(app)
@@ -43,7 +43,11 @@ def validateText(text):
     return text and len(text.strip()) != 0
 
 
-@app.route('/', methods=['POST', 'GET'])
+@app.route('/')
+def homePage():
+    return render_template("index.html")
+
+@app.route('/login', methods=['POST', 'GET'])
 def login():  # put application's code here for login page
     if flask.request.method == 'POST':
         formUsername = sanitizeText(flask.request.form['uname'])

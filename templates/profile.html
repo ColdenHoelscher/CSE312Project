@@ -3,6 +3,7 @@
     <title>Profile page</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <link href="/css/style.css" rel="stylesheet" />
   </head>
   <body>
     <div class="header">
@@ -69,7 +70,7 @@
       });
     </script>
     <div id="response"></div>
-    <input type="text" id="message" placeholder="Message" />
+    <input type="text" id="message" placeholder="Message" style="color:black" />
     <button id="sendit">Pick</button>
 
     {% else %}
