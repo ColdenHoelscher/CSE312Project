@@ -1,16 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8">
     <title>Placeholder for draft/viewing rosters</title>
-    <link href="/css/style.css" rel="stylesheet" />
-  </head>
-  <body>
-    <img src="/img/logo.png" alt="Fantasy Logo" class="header--logo-image" />
+</head>
+<body>
+<h1>View rosters of league {{league_name}}</h1>
 
-    <h1>
-      Placeholder for starting league draft and viewing other player rosters
-      (once draft done)
-    </h1>
-  </body>
+{% if draft_done %}
+<h3>User rosters:</h3>
+<div>
+    {% for user_roster in user_rosters %}
+        <p>{{user_roster}}</p>
+        <br>
+    {% endfor %}
+</div>
+
+
+{% else %}
+<h3>Draft for this league hasn't been completed by all relevant users.</h3>
+{% endif %}
+
+</body>
 </html>

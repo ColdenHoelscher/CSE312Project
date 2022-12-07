@@ -8,7 +8,7 @@ import draft
 import leagues
 import secretkey
 
-app = Flask(__name__, static_folder="static", static_url_path='')
+app = Flask(__name__)
 app.secret_key = secretkey.secretkey
 app.config['SECRET_KEY'] = secretkey.secretkey
 socketio = SocketIO(app)
@@ -39,15 +39,8 @@ def sanitizeText(text):
 def validateText(text):
     return text and len(text.strip()) != 0
 
-@app.route('/')
-def homePage():  # put application's code here for login page
-    return render_template("index.html")
 
-@app.route("/style.css")
-def styling():
-    return
-
-@app.route('/login', methods=['POST', 'GET'])
+@app.route('/', methods=['POST', 'GET'])
 def login():  # put application's code here for login page
     if flask.request.method == 'POST':
         formUsername = sanitizeText(flask.request.form['uname'])
@@ -145,7 +138,11 @@ def league_creation_page():
         updatedCreated.append(leagues.escape_all(lname))
         updatedJoined.append(leagues.escape_all(lname))
         username_table.update_one({"authToken": session["token"]}, {"$set": {"joinedLeagues": updatedJoined, "createdLeagues": updatedCreated}})
-        return render_template("index.html")
+        do_draft = decideUserTurn()
+        leaguesList = list(leagues.league_table.find({}))
+        return render_template("profile.html", User=retrievedDoc['username'], leagues=leaguesList, leaguesJ=updatedJoined,
+                               leaguesC=updatedCreated, doSocket=do_draft)
+        # return render_template("index.html")
     else:
         return render_template("leaguesettings.html")
 
@@ -158,28 +155,59 @@ def joinLeague():
     if validLeague != 0:
         retrievedDoc = username_table.find_one({"authToken": session["token"]})
         updatedJoined = retrievedDoc['joinedLeagues']
-        if option not in updatedJoined:
+        # Make sure league draft hasn't started
+        desired_league = leagues.league_table.find_one({"name": option})
+        if option not in updatedJoined and not desired_league['isDrafting']:
             updatedJoined.append(option)
             username_table.update_one({"authToken": session["token"]}, {"$set": {"joinedLeagues": updatedJoined}})
     leaguesList = list(leagues.league_table.find({}))
     retDoc = username_table.find_one({"authToken": session["token"]})
     finalJoined = retDoc['joinedLeagues']
+    finalCreated = retDoc['createdLeagues']
     do_draft = decideUserTurn()
-    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined, doSocket=do_draft)
+    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined,
+                           leaguesC=finalCreated, doSocket=do_draft)
 
 
 @app.route('/viewJoinedL', methods=['GET'])
 def viewJoinedLeague():
     option = flask.request.args.get("joined")
+    print("Name: " + option)
     validLeague = list(leagues.league_table.find({"name": option}))
     if validLeague != 0:
-        return render_template("startleague.html")
+        #  If draft done show rosters of users in league, if not simply state draft not completed
+        league_entry = leagues.league_table.find_one({"name": option})
+        if league_entry['isDrafting']:
+            draft_entry = draft_table.find_one({"leagueName": option})
+            if len(draft_entry['userList']) == 0:
+                # Iterate through all keys of rosterDict and fill retList with strings of users and their rosters
+                roster_entry = roster_table.find_one({"leagueName": option})
+                ret_list = []
+                wanted_dict = roster_entry['rosterDict']
+                key_list = list(wanted_dict.keys())
+                for key in key_list:
+                    ret_string = ""
+                    player_list = wanted_dict[key]
+                    ret_string = ret_string + key + ": "
+                    for player in player_list:
+                        if player_list[0] == player:
+                            ret_string = ret_string + player
+                        else:
+                            ret_string = ret_string + ", " + player
+                    ret_list.append(ret_string)
+                return render_template("startleague.html", league_name=option, draft_done=True, user_rosters=ret_list)
+            else:
+                return render_template("startleague.html", league_name=option, draft_done=False)
+        else:
+            return render_template("startleague.html", league_name=option, draft_done=False)
     else:
         leaguesList = list(leagues.league_table.find({}))
         retDoc = username_table.find_one({"authToken": session["token"]})
         finalJoined = retDoc['joinedLeagues']
+        finalCreated = retDoc['createdLeagues']
         do_draft = decideUserTurn()
-        return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined, doSocket=do_draft)
+        return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined,
+                               leaguesC=finalCreated, doSocket=do_draft)
 
 
 @app.route('/draft', methods=['GET'])
@@ -197,8 +225,10 @@ def doDraft():
     retDoc = username_table.find_one({"authToken": session["token"]})
     leaguesList = list(leagues.league_table.find({}))
     finalJoined = retDoc['joinedLeagues']
+    finalCreated = retDoc['createdLeagues']
     do_draft = decideUserTurn()
-    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined, doSocket=do_draft)
+    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined,
+                           leaguesC=finalCreated, doSocket=do_draft)
 
 def decideUserTurn():
     wanted_entry = username_table.find_one({"authToken": session["token"]})
@@ -217,6 +247,7 @@ def decideUserTurn():
 @socketio.on('message')
 def updateRoster(pick):
     print("User: " + pick)
+    pick = sanitizeText(pick)
     # check if roster_table has matching league entry, if not make one
     # first get draft_table entry
     wanted_entry = username_table.find_one({"authToken": session["token"]})
@@ -240,15 +271,21 @@ def updateRoster(pick):
     if pick == "see players":  # if user wants to see available players send them that
         player_message = ""
         for aPlayer in remaining_players:
-            player_message = player_message + "\n" + aPlayer
+            if aPlayer == remaining_players[0]:
+                player_message = player_message + aPlayer
+            else:
+                player_message = player_message + ",\n" + aPlayer
         send(player_message)
+    elif pick == "User connected":
+        connect_successful = "Websocket connected"
+        send(connect_successful)
     # do this if they don't wish to see available players
     else:
         picks_dict = draft_info['picksLeft']
         picks_remaining = picks_dict[username]
         if pick in remaining_players:
             if picks_remaining > 0:
-                message = pick + "added to roster."
+                message = pick + " added to roster."
                 # update rosterDict
                 wantedRosterEntry = roster_table.find_one({"leagueName": draft_info['leagueName']})
                 oldRosterDict = wantedRosterEntry['rosterDict']
