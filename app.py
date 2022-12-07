@@ -378,5 +378,15 @@ def leaders():
     else:
         return render_template("leauge.html", leaderboard = "")
 
+@app.route('/return', methods=['GET'])
+def reload_profile():
+    retDoc = username_table.find_one({"authToken": session["token"]})
+    leaguesList = list(leagues.league_table.find({}))
+    finalJoined = retDoc['joinedLeagues']
+    finalCreated = retDoc['createdLeagues']
+    do_draft = decideUserTurn()
+    return render_template("profile.html", User=retDoc['username'], leagues=leaguesList, leaguesJ=finalJoined,
+                           leaguesC=finalCreated, doSocket=do_draft)
+
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0")
