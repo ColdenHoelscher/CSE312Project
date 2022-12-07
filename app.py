@@ -7,8 +7,13 @@ import secrets
 import draft
 import leagues
 import secretkey
+import leaderboard
+import stats
 
-app = Flask(__name__, static_folder="static", static_url_path='')
+
+
+
+app = Flask(__name__)
 app.secret_key = secretkey.secretkey
 app.config['SECRET_KEY'] = secretkey.secretkey
 socketio = SocketIO(app)
@@ -39,15 +44,8 @@ def sanitizeText(text):
 def validateText(text):
     return text and len(text.strip()) != 0
 
-@app.route('/')
-def homePage():  # put application's code here for login page
-    return render_template("index.html")
 
-@app.route("/style.css")
-def styling():
-    return
-
-@app.route('/login', methods=['POST', 'GET'])
+@app.route('/', methods=['POST', 'GET'])
 def login():  # put application's code here for login page
     if flask.request.method == 'POST':
         formUsername = sanitizeText(flask.request.form['uname'])
@@ -275,6 +273,64 @@ def updateRoster(pick):
             not_available = "Player isn't available"
             send(not_available)
 
+
+@app.route('/logstats', methods=['GET','POST'])
+def stat_that():
+    if flask.request.method == 'POST':
+        username_entry = []
+        zam = False
+        leauge_entry = []
+        fep = {}
+        form_leaugename = sanitizeText(flask.request.form['leauge'])
+        form_username = sanitizeText(flask.request.form['username'])
+        form_points = sanitizeText(flask.request.form['points'])
+        form_assists = sanitizeText(flask.request.form['assists'])
+        form_rebounds = sanitizeText(flask.request.form['rebounds'])
+        for x in username_table.find({"username":form_username}):
+            username_entry.append(x)
+            print(x)
+        for x in username_table.find({"joinedLeagues":form_leaugename}):
+            print(x)
+            leauge_entry.append(x)
+        if len(leauge_entry) == 0:
+            return render_template("stats.html",leaderboard = "Stats Not Logged. Invalid Leauge")
+        for x in leauge_entry:
+            if ('username', form_username) in x.items():
+                zam = True
+        entry = username_entry
+        print(entry) #CURRENT ISSUE 6:14
+        if len(username_entry) == 0 or zam == False:
+            return render_template("stats.html",leaderboard = "Invalid user or leauge")
+        entry = {"leauge":form_leaugename,"username":form_username,"points":form_points,"assists":form_assists,"rebounds":form_rebounds}
+        log_status = stats.input(entry)
+        if log_status == 0:
+             return render_template("stats.html",leaderboard = "Stats Not Logged.You need to wait!")
+        else:
+            leauge_info = roster_table.find_one({"leagueName":form_leaugename})["scoresDict"]#here
+            for x in leauge_info.keys():
+                if x == form_username:
+                    fep[x] = log_status
+                else:
+                    fep[x] = leauge_info.get(x)
+            roster_table.update_one({"leagueName":form_leaugename},{"$set":{"scoresDict": fep}})
+            return render_template("stats.html",leaderboard = "Stats Successfully Updated!:Check leaderboard for changes")
+    else:
+        return render_template("stats.html",leaderboard = "")
+
+    
+@app.route('/leaderboard', methods = ['GET','POST'])
+def leaders():
+    if flask.request.method == 'POST':
+        form_leaugename = sanitizeText(flask.request.form['leauge'])
+        acc =  list(leagues.league_table.find({"name": form_leaugename}))
+        if len(acc) > 0:
+            leauge_info = roster_table.find_one({"leagueName":form_leaugename})["scoresDict"]
+            leaderboardR= leaderboard.create_leaderboard(leauge_info)
+            return render_template("leauge.html", leaderboard = leaderboardR)
+        else:   
+            return render_template("leauge.html",leaderboard = "Leauge invalid")
+    else:
+        return render_template("leauge.html", leaderboard = "")
 
 if __name__ == '__main__':
     socketio.run(app, host="0.0.0.0")

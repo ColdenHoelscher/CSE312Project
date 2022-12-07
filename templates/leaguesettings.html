@@ -1,40 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8">
     <title>League settings</title>
-    <link href="/css/style.css" rel="stylesheet" />
-  </head>
-  <body>
-    <img src="/img/logo.png" alt="Fantasy Logo" class="header--logo-image" />
-    <form action="/makeleague" method="POST">
-      <div class="container">
-        <label for="lname"><b>League Name:</b></label>
-        <input type="text" placeholder="League Name" name="lname" required />
-        <br />
-        <label for="plist"><b>Player List:</b></label>
-        <br />
-        <textarea
-          id="player-list-input"
-          name="plist"
-          cols="40"
-          rows="6"
-        ></textarea>
-        <br />
-        <button type="submit">Create</button>
-      </div>
-    </form>
-    <br />
-    <form action="/changename" method="POST">
-      <div class="container">
-        <label for="oldname"><b>League Name:</b></label>
-        <input type="text" placeholder="League Name" name="oldname" required />
-        <br />
-        <label for="newname"><b>New Name:</b></label>
-        <input type="text" placeholder="New Name" name="newname" required />
-        <br />
-        <button type="submit">Update</button>
-      </div>
-    </form>
-  </body>
+</head>
+<body>
+<form action="/makeleague" method="POST">
+    <div class="container">
+    <label for="lname"><b>League Name:</b></label>
+    <input type="text" placeholder="League Name" name="lname" required>
+    <br>
+    <label for="plist"><b>Player List:</b></label>
+    <br>
+    <textarea id="player-list-input" name="plist" cols="40" rows="6"></textarea>
+    <br>
+    <button type="submit">Create</button>
+  </div>
+</form>
+<br>
+<form action="/changename" method="POST">
+    <div class="container">
+    <label for="oldname"><b>League Name:</b></label>
+    <input type="text" placeholder="League Name" name="oldname" required>
+    <br>
+    <label for="newname"><b>New Name:</b></label>
+    <input type="text" placeholder="New Name" name="newname" required>
+    <br>
+    <button type="submit">Update</button>
+  </div>
+</form>
+</body>
 </html>

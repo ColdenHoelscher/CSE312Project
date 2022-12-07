@@ -1,17 +1,29 @@
 <html>
   <head>
-    <title>Home page</title>
-    <link href="/css/style.css" rel="stylesheet" />
+    <title>Login page</title>
   </head>
   <body>
-    <div class="home-container">
-      <div class="container-element">
-        <img src="/img/logo.png" alt="Fantasy Logo" class="logo-image" />
+    <h1>Fantasy Sports Login</h1>
+
+    <p id="paragraph">Login big boi</p>
+
+    <form action="/" method="POST">
+      <div class="container">
+        <label for="uname"><b>Username</b></label>
+        <input type="text" placeholder="Enter Username" name="uname" required />
+        <br />
+        <label for="psw"><b>Password</b></label>
+        <input
+          type="password"
+          placeholder="Enter Password"
+          name="psw"
+          required
+        />
+
+        <button type="submit">Login</button><br />
+        <a href="/signup">Go to signup page</a>
       </div>
-      <div class="action-buttons">
-        <a href="/login"><button>Log in</button></a>
-        <a href="/signup"><button>Sign up</button></a>
-      </div>
-    </div>
+    </form>
+    <p>{{ loginStatus }}</p>
   </body>
 </html>
