@@ -1,25 +1,39 @@
 <html>
   <head>
     <title>Sign up page</title>
+    <link href="/css/style.css" rel="stylesheet" />
   </head>
   <body>
-    <h1>Fantasy Sports Sign up</h1>
+    <img src="/img/logo.png" alt="Fantasy Logo" class="header--logo-image" />
 
-    <form action="/signup" method="POST">
+    <form action="/signup" method="POST" class="credentials">
+      <h2 class="credentials-header">Fantasy Basketball Sign up</h2>
       <div class="container">
-        <label for="uname"><b>Username</b></label>
-        <input type="text" placeholder="Enter Username" name="uname" required />
+        <label for="uname" class="credentials-label credentials-all"
+          ><b>Username</b></label
+        >
+        <input
+          type="text"
+          placeholder="Enter Username"
+          name="uname"
+          required
+          class="credentials-input credentials-all"
+        />
         <br />
-        <label for="psw"><b>Password</b></label>
+        <label for="psw" class="credentials-label credentials-all"
+          ><b>Password</b></label
+        >
         <input
           type="password"
           placeholder="Enter Password"
           name="psw"
           required
+          class="credentials-input credentials-all"
         />
-
-        <button type="submit">Sign up</button><br />
-        <a href="/">Go back to login page</a>
+        <div class="action-buttons--form">
+          <button type="submit">Sign up</button>
+          <a href="/"><button type="button">Home page</button></a>
+        </div>
       </div>
       <p>{{ signUpStatus }}</p>
     </form>
