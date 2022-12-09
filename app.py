@@ -332,6 +332,11 @@ def stat_that():
         form_points = sanitizeText(flask.request.form['points'])
         form_assists = sanitizeText(flask.request.form['assists'])
         form_rebounds = sanitizeText(flask.request.form['rebounds'])
+        # Lookup username in database find token and compare with cookie
+        ret_doc = username_table.find_one({"username": form_username})
+        auth_token = ret_doc["authToken"]
+        if auth_token != session["token"]:
+            return render_template("stats.html", leaderboard="You are not that user, you're being naughty... don't think about blinking")
         for x in username_table.find({"username":form_username}):
             username_entry.append(x)
             print(x)

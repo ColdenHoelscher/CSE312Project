@@ -16,7 +16,9 @@
     <p id="paragraph">This is your profile</p>
 
     <button onclick="location.href='/profile'">Create League</button>
-    <button onclick="location.href='/return'">Reload profile</button>
+    <button onclick="location.href='/return'">Reload Profile</button>
+    <button onclick="location.href='/leaderboard'">Go to Leaderboard</button>
+    <button onclick="location.href='/logstats'">Update Your Stats</button>
     <div class="profile-form">
       <form action="/viewLeagues" method="get">
         <label for="unjoined">Join a league:</label>
@@ -55,7 +57,7 @@
 
     <script type="text/javascript" charset="utf-8">
       $(document).ready(function () {
-        var socket = io.connect("http://localhost:8080");
+        var socket = io.connect("http://sportssiteproject.ml/", {transports: ["websocket"]});
         socket.on("connect", function () {
           socket.send("User connected");
         });
