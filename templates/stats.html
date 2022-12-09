@@ -1,6 +1,7 @@
 <html>
     <head>
         <title> Input Team Stats </title>
+        <link href="/css/style.css" rel="stylesheet" />
     </head>
     <body>
         <h1> Input Player Stats</h1>
@@ -8,23 +9,23 @@
         <form action="/logstats" method="POST">
             <div class="container"></div>
               <label for="leauge"><b>Name of leauge:</b></label>
-              <input type="text" placeholder="Enter Leauge Name" name= "leauge" required />
+              <input type="text" placeholder="Enter Leauge Name" name= "leauge" required="" style= "color: black" />
               <br />
               <div class="container"></div>
               <label for="username"><b>Name of User:</b></label>
-              <input type="text" placeholder="Enter Username" name= "username" required />
+              <input type="text" placeholder="Enter Username" name= "username" required="" style= "color: black"/>
               <br />
               <div class="container"></div>
               <label for="Points"><b>Total Team Points:</b></label>
-              <input type="text" placeholder="Enter Points" name= "points" required />
+              <input type="text" placeholder="Enter Points" name= "points" required="" style= "color: black" />
               <br />
               <div class="container"></div>
               <label for="Assists"><b>Total Team Assists:</b></label>
-              <input type="text" placeholder="Enter Assists" name= "assists" required />
+              <input type="text" placeholder="Enter Assists" name= "assists" required="" style= "color: black"/>
               <br /> 
               <div class="container"></div>
               <label for="Rebounds"><b>Total Team Rebounds:</b></label>
-              <input type="text" placeholder="Enter Rebounds" name= "rebounds" required />
+              <input type="text" placeholder="Enter Rebounds" name= "rebounds"required="" style= "color: black"/>
               <br />
               <button type="submit">Submit</button><br />
               <p>{{leaderboard}}</p>

@@ -1,13 +1,14 @@
 <html>
     <head>
         <title> Leaderboard </title>
+        <link href="/css/style.css" rel="stylesheet" />
     </head>
     <body>
         <h1> View Leaderboard </h1>
         <form action="/leaderboard" method="POST">
-            <div class="container"></div>
+            <div class="containerPP"></div>
               <label for="leauge"><b>Name of leauge:</b></label>
-              <input type="text" placeholder="Enter Leauge Name" name= "leauge" required />
+              <input type="text" placeholder="Enter Leauge Name" name= "leauge" required="" style= "color: black"/>
               <br />
               <button type="submit">Submit</button><br />
               <p>{{leaderboard}}</p>
